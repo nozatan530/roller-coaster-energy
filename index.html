@@ -578,7 +578,7 @@ design:{
   ]}
 };
 let LANG='ja';
-try{LANG=localStorage.getItem('rc-energy-lab-lang')||(/^ja\b/i.test(navigator.language||'ja')?'ja':'en');}catch(e){}
+try{LANG=localStorage.getItem('rc-energy-lab-lang')||'ja';}catch(e){}
 if(LANG!=='ja'&&LANG!=='en')LANG='ja';
 const msg=k=>UI[LANG][k];
 const locCache={};
