@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ジェットコースター・エネルギーラボ</title>
+<meta name="description" content="ジェットコースターを走らせて、運動エネルギー・位置エネルギー・熱の入れかわりを確かめる高校物理基礎のシミュレーション">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="ジェットコースター・エネルギーラボ">
+<meta property="og:description" content="ジェットコースターを走らせて、運動エネルギー・位置エネルギー・熱の入れかわりを確かめる高校物理基礎のシミュレーション">
+<meta property="og:image" content="https://coaster.meetupsensei.com/ogp.jpg">
+<meta property="og:url" content="https://coaster.meetupsensei.com/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<script>try{var t=localStorage.getItem('rc-energy-lab-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1D2B53; --ink2:#44507a; --sky:#5AB0F0; --red:#E63946; --yellow:#FFC93C;
+  --paper:#F4F8FF; --card:#FFFFFF; --line:#D6DEF0;
+  --K:#E63946; --U:#2B8CE6; --KU:#7B4FD6; --T:#1D2B53;
+  --ok:#1F9D74; --ng:#D1495B;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --ink:#E8EDFF; --ink2:#AEB8DA; --paper:#10172E; --card:#18213F; --line:#2C3860; --T:#C9D1EE; }
+}
+:root[data-theme="dark"]{ --ink:#E8EDFF; --ink2:#AEB8DA; --paper:#10172E; --card:#18213F; --line:#2C3860; --T:#C9D1EE; }
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;font-weight:500;line-height:1.65;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+
+/* ---------- header / route ---------- */
+header{max-width:1280px;margin:0 auto;padding:22px 20px 6px}
+.title{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+h1{margin:0;font-weight:800;font-size:clamp(26px,4vw,40px);line-height:1.15;letter-spacing:.01em}
+h1 .loop{display:inline-block;transform:translateY(-.05em)}
+.tag{font-size:14px;color:var(--ink2);margin:0 0 4px}
+.score{font-weight:800;font-size:15px;background:var(--yellow);color:#1D2B53;padding:4px 12px;border-radius:999px}
+.tagrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between;margin:0 0 4px}
+.tagrow .tag{margin:0}
+.tools{display:flex;align-items:center;gap:8px;margin-left:auto}
+.title .score{margin-left:auto}
+.theme{border:2px solid var(--line);background:var(--card);border-radius:999px;width:38px;height:32px;color:var(--ink2);font-size:15px;line-height:1}
+.langsw{display:flex;border:2px solid var(--line);border-radius:999px;overflow:hidden;background:var(--card)}
+.langsw button{border:0;background:transparent;padding:4px 12px;font-size:13px;font-weight:700;color:var(--ink2)}
+.langsw button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.route{position:relative;display:flex;gap:0;margin:18px 0 4px;overflow-x:auto;padding:6px 2px 10px}
+.route::before{content:"";position:absolute;left:24px;right:24px;top:25px;height:6px;border-radius:3px;
+  background:repeating-linear-gradient(90deg,var(--red) 0 14px,#b82835 14px 18px)}
+.stop{position:relative;flex:1 0 118px;display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:none;padding:0 4px;text-align:center}
+.stop .dot{width:30px;height:30px;border-radius:50%;background:var(--card);border:4px solid var(--red);display:grid;place-items:center;font-weight:800;font-size:14px;z-index:1}
+.stop .nm{font-size:13px;font-weight:700;line-height:1.3;color:var(--ink2)}
+.stop[aria-current="step"] .dot{background:var(--yellow);border-color:var(--ink);color:#1D2B53;transform:scale(1.15)}
+.stop[aria-current="step"] .nm{color:var(--ink)}
+.stop.done .dot{background:var(--red);color:#fff}
+
+/* ---------- main grid ---------- */
+main{max-width:1280px;margin:0 auto;padding:8px 20px 40px;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start}
+@media (max-width:980px){ main{grid-template-columns:minmax(0,1fr)} }
+@media (max-width:600px){ .scene{aspect-ratio:4/3} header,main{padding-left:12px;padding-right:12px} }
+.panel{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:16px}
+.lead h2{margin:0 0 4px;font-size:22px;font-weight:800}
+.lead p{margin:0;color:var(--ink2);max-width:62ch}
+
+.scene{position:relative;margin-top:12px;border-radius:14px;overflow:hidden;border:3px solid var(--ink);background:#8fd0ff;aspect-ratio:16/9;min-height:240px;width:100%}
+.scene canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
+.hud{position:absolute;left:10px;top:10px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none}
+.hud span{background:rgba(29,43,83,.82);color:#fff;border-radius:8px;padding:2px 9px;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.result{min-height:1.6em;margin:10px 2px 0;font-weight:700}
+.result.ok{color:var(--ok)} .result.ng{color:var(--ng)}
+
+.play{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.btn{border:2px solid var(--ink);background:var(--card);border-radius:12px;padding:8px 16px;font-weight:800}
+.btn.go{background:var(--red);border-color:var(--red);color:#fff;min-width:140px}
+.btn.go:hover{filter:brightness(1.07)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.seg{display:inline-flex;border:2px solid var(--ink);border-radius:12px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:7px 12px;font-weight:700}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.seg button+button{border-left:2px solid var(--ink)}
+
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px 18px;margin-top:14px}
+.ctl label{display:flex;justify-content:space-between;font-size:14px;font-weight:700}
+.ctl output{font-variant-numeric:tabular-nums;color:var(--red)}
+.ctl input[type=range]{width:100%;accent-color:var(--red)}
+.ctl .seg{margin-top:4px;flex-wrap:wrap}
+.ctl .note{font-size:12px;color:var(--ink2)}
+
+/* ---------- energy ---------- */
+.side{display:flex;flex-direction:column;gap:16px}
+.energy h3,.quiz h3{margin:0 0 8px;font-size:17px;font-weight:800}
+.bars{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-items:end;height:190px;padding:0 4px;border-bottom:4px solid var(--ink);border-left:4px solid var(--ink)}
+.bar{position:relative;height:100%;border:2px solid var(--ink);border-bottom:0;border-radius:6px 6px 0 0;background:var(--paper);overflow:hidden}
+.bar i{position:absolute;left:0;right:0;bottom:0;height:0%}
+.bar.k i{background:var(--K)} .bar.u i{background:var(--U)} .bar.ku i{background:var(--KU)} .bar.t i{background:var(--T)}
+.blabels{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:6px 4px 0 8px;text-align:center;font-size:12px;line-height:1.35}
+.blabels b{display:block;font-size:15px}
+.blabels span{font-variant-numeric:tabular-nums;color:var(--ink2)}
+.eqline{margin-top:8px;font-size:13px;color:var(--ink2)}
+.eqline b{color:var(--ink)}
+#chart{width:100%;height:110px;display:block;margin-top:10px;border-radius:8px;background:var(--paper)}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--ink2);margin-top:4px}
+.legend i{display:inline-block;width:14px;height:4px;border-radius:2px;vertical-align:middle;margin-right:4px}
+
+/* ---------- quiz ---------- */
+.qprog{display:flex;gap:6px;margin-bottom:10px}
+.qprog i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.qprog i.now{background:var(--yellow)} .qprog i.ok{background:var(--ok)} .qprog i.ng{background:var(--ng)}
+.qtext{font-weight:700;font-size:16px;margin:0 0 10px}
+.qhint{font-size:13px;color:var(--ink2);margin:-4px 0 10px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:left;border:2px solid var(--line);background:var(--paper);border-radius:12px;padding:9px 12px;font-weight:700}
+.opt:hover:not(:disabled){border-color:var(--ink)}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--card))}
+.opt.ng{border-color:var(--ng);background:color-mix(in srgb,var(--ng) 12%,var(--card))}
+.opt:disabled{cursor:default}
+.fb{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--paper);font-size:14px}
+.fb b{display:block;font-size:15px}
+.fb.ok b{color:var(--ok)} .fb.ng b{color:var(--ng)}
+.qnav{display:flex;gap:8px;justify-content:space-between;margin-top:12px;flex-wrap:wrap}
+.preset{border:2px dashed var(--red);background:transparent;color:var(--red);border-radius:12px;padding:6px 12px;font-weight:800;margin-bottom:10px}
+
+/* ---------- calc (stage 5) ---------- */
+.calc{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;margin-top:10px}
+.calc label{font-weight:800}
+.calc input{width:100%;padding:6px 10px;border:2px solid var(--line);border-radius:10px;background:var(--paper);font-variant-numeric:tabular-nums}
+.calc input.ok{border-color:var(--ok)} .calc input.ng{border-color:var(--ng)}
+.given{font-size:14px;background:var(--paper);border-radius:12px;padding:8px 12px;margin-top:10px}
+
+/* ---------- design (stage 6) ---------- */
+.palette{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{border:2px solid var(--ink);border-radius:999px;background:var(--card);padding:5px 12px;font-weight:700;font-size:14px}
+.chip small{color:var(--red);margin-left:4px}
+.parts{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.parts li{display:flex;align-items:center;gap:4px;background:var(--paper);border:2px solid var(--line);border-radius:10px;padding:3px 4px 3px 10px;font-size:14px;font-weight:700}
+.parts button{border:0;background:transparent;padding:2px 6px;border-radius:6px}
+.parts button:hover{background:var(--line)}
+.checks{list-style:none;margin:10px 0 0;padding:0;font-size:14px}
+.checks li{padding:2px 0}
+.checks li::before{content:"・";color:var(--ink2)}
+.checks li.ok::before{content:"✔ ";color:var(--ok)}
+.checks li.ng::before{content:"✖ ";color:var(--ng)}
+.namebox{width:100%;padding:6px 10px;border:2px solid var(--line);border-radius:10px;background:var(--paper)}
+footer{max-width:1280px;margin:0 auto;padding:0 20px 30px;font-size:12px;color:var(--ink2)}
+footer .model{margin:0 0 18px}
+footer .credit{text-align:center;border-top:2px solid var(--line);padding-top:18px;margin:0}
+footer a{color:inherit}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+</style>
+</head>
+<body>
+<header>
+  <div class="tagrow">
+    <p class="tag" data-i18n="tag">高校物理基礎・力学的エネルギー</p>
+    <div class="tools">
+      <div class="langsw" id="langSw"><button data-lang="ja" aria-pressed="true">日本語</button><button data-lang="en" aria-pressed="false">English</button></div>
+      <button class="theme" id="themeBtn" aria-label="ライト／ダーク切り替え">◐</button>
+    </div>
+  </div>
+  <div class="title">
+    <h1 data-i18n="title">ジェットコースター・エネルギーラボ</h1>
+    <span class="score" id="score">正解 0</span>
+  </div>
+  <nav class="route" id="route" aria-label="学習の区間" data-i18n-aria="routeLabel"></nav>
+</header>
+<main>
+  <section class="panel">
+    <div class="lead"><h2 id="stTitle"></h2><p id="stLead"></p></div>
+    <div class="scene" id="scene">
+      <canvas id="cv" aria-label="ジェットコースターのシミュレーション" data-i18n-aria="canvasLabel"></canvas>
+      <div class="hud"><span id="hudH">高さ 0 m</span><span id="hudV">速さ 0 km/h</span><span id="hudT">0.0 秒</span></div>
+    </div>
+    <div class="result" id="result" role="status"></div>
+    <div class="play" id="play">
+      <button class="btn go" id="btnGo">▶ 走らせる</button>
+      <button class="btn" id="btnReset" data-i18n="reset">↺ スタートに戻す</button>
+      <div class="seg" role="group" aria-label="再生速度" data-i18n-aria="speedLabel" id="speedSeg">
+        <button data-sp="1" aria-pressed="false">×1</button><button data-sp="2" aria-pressed="true">×2</button><button data-sp="5" aria-pressed="false">×5</button>
+      </div>
+    </div>
+    <div class="controls" id="controls"></div>
+    <div id="extra"></div>
+  </section>
+  <aside class="side">
+    <section class="panel energy" aria-label="エネルギーの棒グラフ" data-i18n-aria="energyLabel">
+      <h3 data-i18n="energyHead">コースター＋地球の系のエネルギー</h3>
+      <div class="bars">
+        <div class="bar k"><i id="bK"></i></div><div class="bar u"><i id="bU"></i></div>
+        <div class="bar ku"><i id="bKU"></i></div><div class="bar t"><i id="bT"></i></div>
+      </div>
+      <div class="blabels">
+        <div><b>K</b><span data-i18n="lK">運動</span><br><span id="vK">0</span></div>
+        <div><b>U</b><span data-i18n="lU">位置</span><br><span id="vU">0</span></div>
+        <div><b>K+U</b><span data-i18n="lKU">合計</span><br><span id="vKU">0</span></div>
+        <div><b>T</b><span data-i18n="lT">熱など</span><br><span id="vT">0</span></div>
+      </div>
+      <div class="eqline" id="eqline"></div>
+      <canvas id="chart" aria-label="エネルギーの時間変化グラフ" data-i18n-aria="chartLabel"></canvas>
+      <div class="legend"><span><i style="background:var(--K)"></i>K</span><span><i style="background:var(--U)"></i>U</span><span><i style="background:var(--T)"></i>T</span><span data-i18n="xAxis">横軸：時間</span></div>
+    </section>
+    <section class="panel quiz" aria-label="クイズ" data-i18n-aria="quizLabel">
+      <h3 id="qHead">クイズ</h3>
+      <div id="quiz"></div>
+    </section>
+  </aside>
+</main>
+<footer>
+  <p class="model" data-i18n="model">モデルの簡略化：コースターは大きさのない物体として扱い、レールの摩擦は一定の大きさ、空気抵抗は速さの2乗に比例するとしています。ループでは頂上付近で速さが足りないとレールから離れて落ちます（ビー玉コースターと同じ条件）。g = 9.8 m/s²</p>
+  <p class="credit"><span data-i18n="credit">制作：のざたん</span> ／ <a href="https://meetupsensei.com">meetupsensei.com</a> ／ <a href="https://github.com/nozatan530/roller-coaster-energy/blob/main/LICENSE">MIT License</a> ／ <a href="https://github.com/nozatan530/roller-coaster-energy">GitHub</a></p>
+</footer>
+<script>
+// ===== Physics & track (shared) =====
+const G = 9.8; let DRAG = 0.0003; // air resistance per unit mass (1/m)
+function buildTrack(segs){
+  const pts=[]; let x=0,y=0; const STEP=0.25;
+  const push=(px,py,o)=>pts.push(Object.assign({x:px,y:py,mu:0.02,loop:false,brake:false},o||{}));
+  const marks={};
+  for(const sg of segs){
+    const o={mu:sg.mu!=null?sg.mu:0.02,brake:!!sg.brake};
+    if(sg.t==='start'){x=0;y=sg.h;push(x,y,o);}
+    else if(sg.t==='mark'){marks[sg.name]=pts.length-1;}
+    else if(sg.t==='flat'){const n=Math.max(1,Math.round(sg.L/STEP));for(let i=1;i<=n;i++)push(x+sg.L*i/n,y,o);x+=sg.L;}
+    else if(sg.t==='drop'){const y0=y,n=Math.max(2,Math.round(sg.L/STEP));for(let i=1;i<=n;i++){const u=i/n;push(x+sg.L*u,y0+(sg.to-y0)*(1-Math.cos(Math.PI*u))/2,o);}x+=sg.L;y=sg.to;}
+    else if(sg.t==='hill'){const y0=y,n=Math.max(2,Math.round(sg.L/STEP));const st0=pts.length;for(let i=1;i<=n;i++){const u=i/n;push(x+sg.L*u,y0+sg.H*(1-Math.cos(2*Math.PI*u))/2,o);}if(sg.top)marks[sg.top]=st0+Math.floor(n/2)-1;x+=sg.L;}
+    else if(sg.t==='loop'){const r=sg.r,d=0.7*r,x0=x,y0=y,n=Math.max(40,Math.round(2*Math.PI*r/STEP));
+      for(let i=1;i<=n;i++){const th=2*Math.PI*i/n;push(x0+r*Math.sin(th)+d*th/(2*Math.PI),y0+r*(1-Math.cos(th)),Object.assign({},o,{loop:true}));}
+      x=x0+d;y=y0;}
+  }
+  // arc length
+  let s=0; pts[0].s=0;
+  for(let i=1;i<pts.length;i++){s+=Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y);pts[i].s=s;}
+  const N=pts.length;
+  for(let i=0;i<N;i++){
+    const a=pts[Math.max(0,i-1)],b=pts[Math.min(N-1,i+1)];
+    const ds=b.s-a.s||1; pts[i].tx=(b.x-a.x)/ds; pts[i].ty=(b.y-a.y)/ds;
+  }
+  for(let i=0;i<N;i++){
+    const a=pts[Math.max(0,i-1)],b=pts[Math.min(N-1,i+1)];
+    const ds=b.s-a.s||1; pts[i].k=(pts[i].tx*(b.ty-a.ty)-pts[i].ty*(b.tx-a.tx))/ds;
+  }
+  let minX=1e9,maxX=-1e9,maxY=0;for(const p of pts){minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);maxY=Math.max(maxY,p.y);}
+  return {pts,L:s,marks,minX,maxX,maxY};
+}
+function sampleTrack(tr,s){
+  const P=tr.pts; if(s<=0)return P[0]; if(s>=tr.L)return P[P.length-1];
+  let lo=0,hi=P.length-1; while(hi-lo>1){const m=(lo+hi)>>1; if(P[m].s<=s)lo=m; else hi=m;}
+  const a=P[lo],b=P[hi],f=(s-a.s)/((b.s-a.s)||1);
+  return {x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,tx:a.tx+(b.tx-a.tx)*f,ty:a.ty+(b.ty-a.ty)*f,k:a.k+(b.k-a.k)*f,mu:a.mu,loop:a.loop&&b.loop,brake:a.brake};
+}
+function newState(tr,m,v0){
+  let i0=0; if(!(v0>0)){ while(i0<tr.pts.length-1 && Math.abs(tr.pts[i0].ty)<=tr.pts[i0].mu+0.01) i0++; }
+  const p0=tr.pts[i0];
+  return {s:p0.s,s0:p0.s,u:v0||0,m,T:0,E0:m*G*p0.y+0.5*m*(v0||0)**2,status:'ready',t:0,fall:null,maxSpeed:0};
+}
+function stepSim(tr,st,dt){
+  if(st.status==='fall'){const f=st.fall;f.vy-=G*dt;f.x+=f.vx*dt;f.y+=f.vy*dt;if(f.y<=0){f.y=0;st.status='crash';}st.t+=dt;return;}
+  if(st.status!=='run')return;
+  st.t+=dt;
+  const p=sampleTrack(tr,st.s); let u=st.u;
+  if(u===0){ if(Math.abs(p.ty)<=p.mu+1e-9){ // cannot start moving
+      st.T=st.E0-st.m*G*p.y; st.status='stopped'; return; } }
+  const dir=u!==0?Math.sign(u):-Math.sign(p.ty);
+  const a=-G*p.ty-dir*p.mu*G-dir*DRAG*u*u;
+  let un=u+a*dt;
+  if(u!==0&&Math.sign(un)!==Math.sign(u)){ if(Math.abs(p.ty)<=p.mu) un=0; }
+  if(u===0&&Math.sign(un)!==dir) un=0;
+  const ds=(u+un)/2*dt; const sPrev=st.s; let sN=sPrev+ds;
+  if(sN>=tr.L){st.s=tr.L;st.u=0;st.T=st.E0-st.m*G*tr.pts[tr.pts.length-1].y;st.status='end';return;}
+  if(sN<=0){sN=0;un=0;}
+  const pn=sampleTrack(tr,sN);
+  const Tn=st.T+(pn.mu*G+DRAG*u*u)*st.m*Math.abs(ds);
+  const ke=st.E0-Tn-st.m*G*pn.y;
+  if(ke<=0){ st.u=0; return; } // turnaround: stay
+  st.s=sN; st.T=Tn;
+  if(un===0){ st.T=st.E0-st.m*G*pn.y; st.u=0; return; }
+  st.u=Math.sign(un)*Math.sqrt(2*ke/st.m);
+  st.maxSpeed=Math.max(st.maxSpeed,Math.abs(st.u));
+  if(pn.loop){ const N=st.u*st.u*pn.k+G*pn.tx; if(N< -0.02*G){ st.status='fall'; st.fall={x:pn.x,y:pn.y,vx:st.u*pn.tx,vy:st.u*pn.ty}; } }
+}
+function energies(tr,st){
+  if(st.status==='fall'||st.status==='crash'){const f=st.fall;const U=st.m*G*f.y,K=0.5*st.m*(f.vx*f.vx+f.vy*f.vy);return {K,U,T:st.T};}
+  const p=sampleTrack(tr,st.s);const U=st.m*G*p.y;const K=0.5*st.m*st.u*st.u;return {K,U,T:st.T};
+}
+
+
+// ===== Stages =====
+const RAIL=0.02;
+const BRAKE=[{t:'flat',L:50,mu:1.0,brake:true}];
+const PARTS={
+  hill:{name:'丘',pt:1},
+  hill2:{name:'2連の丘',pt:2},
+  loop:{name:'ループ',pt:3},
+  bigloop:{name:'大ループ',pt:4},
+  loop2:{name:'2連ループ',pt:5}
+};
+const STAGES=[
+{
+  id:'basic', short:'エネルギーの基本',
+  title:'エネルギーの基本：高さが速さに変わる',
+  lead:'坂の上で止まっているコースターは位置エネルギー U だけを持っています。走らせて、U が運動エネルギー K に入れかわる様子を棒グラフで確かめよう。',
+  controls:[
+    {id:'h',type:'range',label:'スタートの高さ',min:10,max:60,step:1,value:40,unit:'m'},
+    {id:'m',type:'range',label:'質量（乗客を含む）',min:200,max:800,step:50,value:500,unit:'kg'},
+    {id:'mu',type:'seg',label:'レールの摩擦',value:RAIL,options:[{v:0,l:'なし'},{v:RAIL,l:'少しあり'}]}
+  ],
+  build:p=>[{t:'start',h:p.h,mu:p.mu},{t:'drop',to:0,L:p.h*1.6,mu:p.mu},{t:'mark',name:'bottom'},{t:'flat',L:40,mu:p.mu},...BRAKE],
+  mass:p=>p.m, noDrag:p=>p.mu===0,
+  quiz:[
+    {q:'質量が同じとき、運動エネルギー K の大きさを決めるのはどれ？',o:['速さ','高さ','向き','時間'],a:0,e:'K = ½mv²。質量が同じなら、K は速さ v で決まります。'},
+    {q:'速さが2倍になると、運動エネルギーは何倍になる？',o:['2倍','4倍','変わらない','½倍'],a:1,e:'K は v² に比例するので、2² = 4倍です。速さのわずかな違いが、エネルギーでは大きな差になります。'},
+    {q:'U = mgh。質量と g が変わらないとき、位置エネルギー U を決めるのは？',o:['速さ','高さ','レールの長さ'],a:1,e:'U は基準（ここでは地面）からの高さ h に比例します。'},
+    {q:'摩擦「なし」で走らせよう。坂の一番下での運動エネルギー K は、スタートでの位置エネルギー U と比べてどうなる？',hint:'予想してから、棒グラフの K の長さを見てみよう。',preset:{mu:0},o:['ほぼ同じ','約半分','0になる','約2倍'],a:0,e:'摩擦がなければエネルギーはどこにも逃げません。スタートの U が、坂の下ではそっくり K に入れかわります。'},
+    {q:'摩擦を「少しあり」にすると、坂の下での K はどうなる？',preset:{mu:RAIL},o:['少し小さくなる','変わらない','大きくなる'],a:0,e:'レールや空気との摩擦で、エネルギーの一部が熱（T）に変わります。K+U は減りますが、K+U+T はいつもスタートの値と同じです。'},
+    {q:'質量を 2倍にすると、坂の下での「速さ」はどうなる？（実際に質量を変えて速さの表示を見比べよう）',o:['ほぼ変わらない','2倍になる','半分になる'],a:0,e:'mgh = ½mv² の両辺に m があるので、速さ v = √(2gh) は質量によらずに決まります。エネルギーの量は質量に比例して大きくなります。'}
+  ]
+},
+{
+  id:'hill', short:'丘を越えられる？',
+  title:'丘を越えられる？：スタートより高くは上がれない',
+  lead:'2つめの丘の高さを変えて、コースターが越えられるか試そう。点線がスタートの高さです。走らせる前に必ず予想しよう。',
+  controls:[
+    {id:'r',type:'range',label:'丘の高さ（スタートに対する割合）',min:60,max:110,step:1,value:100,unit:'%'},
+    {id:'mu',type:'seg',label:'レールの摩擦',value:RAIL,options:[{v:0,l:'なし'},{v:RAIL,l:'少しあり'}]}
+  ],
+  build:p=>[{t:'start',h:40,mu:p.mu},{t:'drop',to:0,L:60,mu:p.mu},{t:'flat',L:5,mu:p.mu},{t:'hill',H:40*p.r/100,L:70,mu:p.mu,top:'hilltop'},{t:'flat',L:30,mu:p.mu},...BRAKE],
+  mass:()=>500, noDrag:p=>p.mu===0,
+  quiz:[
+    {q:'丘の高さ 105%（スタートより少し高い）。コースターはどうなる？',preset:{r:105,mu:RAIL},hint:'予想してから走らせよう。',o:['丘を越えて進む','丘の頂上で止まる','スタートと同じ高さで引き返す','スタートより低い所で引き返す'],a:3,e:'スタートより高く上がるには、はじめに持っていたより多くのエネルギーが必要です。さらに摩擦で熱に変わるぶん、スタートの高さまでも届きません。'},
+    {q:'丘の高さ 100%（スタートと同じ）。どうなる？',preset:{r:100,mu:RAIL},o:['越えて進む','頂上でちょうど止まる','頂上の手前で引き返す'],a:2,e:'途中で K+U の一部が熱 T に変わったので、スタートと同じ高さまで上がるための U が足りません。'},
+    {q:'丘の高さ 95%（少し低い）。どうなる？',preset:{r:95,mu:RAIL},o:['越えられる','越えられない'],a:1,e:'少し低くても、熱に変わったエネルギーの分をまかなえなければ越えられません。「スタートより低ければ必ず越えられる」わけではないのです。'},
+    {q:'摩擦「なし」にして、丘 100% で走らせよう。どうなる？',preset:{r:100,mu:0},o:['頂上の手前で引き返す','頂上のすぐ近くまで上がって引き返す','頂上を大きく越えて進む'],a:1,e:'摩擦がなければ K+U は一定なので、スタートとほぼ同じ高さまで上がれます。ただし頂上でちょうど K = 0 になるため、越えることはできません。'},
+    {q:'摩擦「少しあり」で、スライダーを動かして越えられる一番高い丘を探そう。見つけた高さはスタートの何%だった？',preset:{mu:RAIL},o:['100%より高い','ちょうど100%','100%より低い'],a:2,e:'このコースでは約85〜90%が限界です。スタートの U のうち、ここまでに熱に変わった割合がわかります。'},
+    {q:'K+U が100%に戻らなかった。これは「エネルギー保存則がやぶれた」ということ？',o:['いいえ。減った分は熱などになって周りに移った','はい。エネルギーの一部は消えてしまった'],a:0,e:'コースター＋地球の系の K+U は減りますが、減った分は熱 T として周りへ移っています。K+U+T の合計は変わりません。これがエネルギー保存です。'}
+  ]
+},
+{
+  id:'friction', short:'摩擦のちがい',
+  title:'摩擦のちがい：氷・雪・芝生とハーフパイプ',
+  lead:'同じ高さからそりをすべらせます。面の種類を変えると、熱に変わるエネルギーの量がどう変わるかを見比べよう。後半はハーフパイプで往復させます。',
+  controls:[
+    {id:'course',type:'seg',label:'コース',value:'sled',options:[{v:'sled',l:'そりの坂'},{v:'pipe',l:'ハーフパイプ'}]},
+    {id:'mu',type:'seg',label:'面の種類',value:0.04,options:[{v:0.01,l:'氷'},{v:0.04,l:'雪'},{v:0.25,l:'芝生'}]},
+    {id:'v0',type:'range',label:'スタートで押す速さ',min:0,max:12,step:1,value:0,unit:'m/s',note:'0 なら静かに手をはなす'}
+  ],
+  build:p=>p.course==='sled'
+    ? [{t:'start',h:30,mu:p.mu},{t:'drop',to:0,L:60,mu:p.mu},{t:'mark',name:'bottom'},{t:'flat',L:70,mu:p.mu},...BRAKE]
+    : [{t:'start',h:20,mu:p.mu},{t:'drop',to:0,L:26,mu:p.mu},{t:'flat',L:14,mu:p.mu},{t:'drop',to:30,L:34,mu:p.mu}],
+  mass:()=>60,
+  quiz:[
+    {q:'雪の坂と芝生の坂（高さは同じ）。坂の上で止まっているとき、位置エネルギーが大きいのは？',o:['雪','芝生','同じ'],a:2,e:'U = mgh は質量と高さだけで決まり、面の種類には関係ありません。'},
+    {q:'すべり降りる間に、運動エネルギーをより多く熱に変えるのは？',preset:{course:'sled',mu:0.25},o:['雪','芝生','同じ'],a:1,e:'芝生のほうが摩擦が大きいので、T の棒がぐんと伸びます。雪でも走らせて比べてみよう。'},
+    {q:'坂の下で運動エネルギー K が大きいのは？',o:['雪','芝生','同じ'],a:0,e:'はじめの U は同じでも、芝生では熱に変わる分が多いので、下に着いたときの K が小さくなります。'},
+    {q:'坂の途中で「K+U がスタートの値より大きい」棒グラフになることはある？',o:['ない','ある'],a:0,e:'外から押すなどしてエネルギーを加えない限り、K+U はスタートの値を超えません。摩擦があれば減る一方です。'},
+    {q:'ハーフパイプで手をはなすと、反対側でスタートと同じ高さまで上がれない。一番よい説明は？',preset:{course:'pipe',mu:0.04,v0:0},o:['K の一部が熱に変わり、U に戻りきらなかったから','質量が足りなかったから','U が K に変わらなかったから'],a:0,e:'下るときに U → K、上るときに K → U と入れかわりますが、その間に一部が熱になって系の外へ出ていきます。往復するたびに届く高さが下がっていきます。'},
+    {q:'ハーフパイプでスタートより高い所まで上がるには、どうすればよい？',o:['スタートで押して K を加える','質量を大きくする','摩擦をなくす'],a:0,e:'押す速さを大きくして試そう。押すと、はじめから K を持ってスタートできます。摩擦をなくしてもスタートと同じ高さまでで、質量を変えても届く高さは変わりません。'}
+  ]
+},
+{
+  id:'loop', short:'ループに挑戦',
+  title:'ループに挑戦：頂上でも速さが必要',
+  lead:'ループの大きさを変えて、落ちずに一回転できる一番大きなループを探そう。ループの頂上では、止まらないだけでなく「ある速さ以上」が必要です。',
+  controls:[
+    {id:'r',type:'range',label:'ループの半径',min:4,max:18,step:1,value:10,unit:'m',note:'ループの高さは半径の2倍'},
+    {id:'pos',type:'seg',label:'ループの位置',value:'early',options:[{v:'early',l:'最初の坂のすぐ後'},{v:'late',l:'丘を2つ越えた後'}]}
+  ],
+  build:p=>{const mu=RAIL,h=40;const a=[{t:'start',h,mu},{t:'drop',to:0,L:60,mu},{t:'flat',L:8,mu}];
+    if(p.pos==='late')a.push({t:'hill',H:22,L:56,mu},{t:'flat',L:8,mu},{t:'hill',H:18,L:48,mu},{t:'flat',L:8,mu});
+    a.push({t:'loop',r:p.r,mu},{t:'flat',L:30,mu},...BRAKE);return a;},
+  mass:()=>500,
+  quiz:[
+    {q:'予想：落ちずに通過できる一番高いループは、越えられる一番高い丘（約35 m）と比べてどうなる？',o:['丘より低い','丘と同じくらい','丘より高い'],a:0,e:'このコースでは半径14 m（高さ28 m）あたりが限界です。ループの頂上では、落ちないための速さ（K）が残っていないといけないので、U に使える分が少なくなります。'},
+    {q:'ループの頂上にいるとき、系のエネルギーの内訳は？',hint:'頂上で一時停止して棒グラフを見よう。',o:['K と U の両方（それまでの熱 T もある）','U だけ','K だけ'],a:0,e:'頂上は高いので U が大きいですが、K も 0 にはなりません。止まってしまうと落ちるからです。'},
+    {q:'半径 16 m で走らせると、どうなる？',preset:{r:16,pos:'early'},o:['頂上付近でレールから離れて落ちる','そのまま通過する','頂上で静止する'],a:0,e:'頂上での速さが足りず、円を描くのに必要な向心力を重力だけで上回ってしまいます。本物のコースターなら大事故。だから設計では余裕をもたせます。'},
+    {q:'ループの位置を「丘を2つ越えた後」にして、半径 14 m で走らせよう。結果は？',preset:{r:14,pos:'late'},o:['最初の位置では通過できたのに、落ちてしまう','どちらの位置でも結果は同じ'],a:0,e:'丘を越える間にもエネルギーは熱に変わり続けます。後ろにあるループほど、使える K+U が少なくなります。'},
+    {q:'本物のコースターでループがコースの前半に置かれることが多いのはなぜ？',o:['熱に変わった分がまだ少なく、大きなループを回れるエネルギーが残っているから','後半は乗客が疲れているから','後半では位置エネルギーが増えるから'],a:0,e:'前半ほど K+U が大きいので、大きくスリルのあるループを置けます。後半の丘は低く、最後はブレーキで止めます。'}
+  ]
+},
+{
+  id:'calc', short:'計算チャレンジ',
+  title:'計算チャレンジ：4つの地点のエネルギー',
+  lead:'質量 400 kg のコースターが、最も低い地点から 45.0 m の高さで静止した状態からスタートします。g = 9.8 m/s² として、各地点の K・U・K+U・T を計算しよう。入力すると棒グラフに反映されます。',
+  controls:[],
+  build:()=>[{t:'start',h:45,mu:RAIL},{t:'mark',name:'p1'},{t:'drop',to:0,L:65,mu:RAIL},{t:'mark',name:'p2'},{t:'flat',L:6,mu:RAIL},{t:'drop',to:35,L:45,mu:RAIL},{t:'mark',name:'p3'},{t:'flat',L:3,mu:RAIL},{t:'drop',to:20,L:40,mu:RAIL},{t:'mark',name:'p4'},{t:'flat',L:30,mu:1.0,brake:true}],
+  mass:()=>400, calc:true,
+  points:[
+    {mark:'p1',txt:'スタート地点。静止している。',h:45,v:0,K:0,U:176400,KU:176400,T:0},
+    {mark:'p2',txt:'最初の坂の一番下（最も低い地点）。速さ 29 m/s。',h:0,v:29,K:168200,U:0,KU:168200,T:8200},
+    {mark:'p3',txt:'高さ 35.0 m の丘の頂上。速さ 9.0 m/s。',h:35,v:9,K:16200,U:137200,KU:153400,T:23000},
+    {mark:'p4',txt:'高さ 20.0 m、ブレーキ直前。速さ 6.0 m/s。',h:20,v:6,K:7200,U:78400,KU:85600,T:90800}
+  ],
+  quiz:[
+    {q:'4つの地点のうち、T（熱などに変わったエネルギー）が一番大きいのは？',o:['地点1','地点2','地点3','地点4'],a:3,e:'T は走った距離が長いほどたまっていきます。K+U+T はどの地点でも 176,400 J です。'},
+    {q:'地点2で K+U がスタートより 8,200 J 小さい。この 8,200 J はどこへ行った？',o:['摩擦や空気抵抗で熱になり、周りに移った','消えてなくなった','地面の位置エネルギーになった'],a:0,e:'系から出ていった分は、レールや空気を温める熱などになっています。'}
+  ]
+},
+{
+  id:'design', short:'オリジナル設計',
+  title:'オリジナル設計：安全でスリルのあるコースターを',
+  lead:'パーツを組み合わせて自分のコースターを設計しよう。条件をすべて満たし、スリルポイントをできるだけ高くするのが目標です。1つ足すごとに走らせて、うまくいかなければ直そう。',
+  controls:[
+    {id:'h',type:'range',label:'スタートの高さ',min:20,max:60,step:1,value:45,unit:'m'},
+    {id:'brake',type:'range',label:'ブレーキの強さ',min:0.2,max:2.0,step:0.1,value:0.8,unit:''}
+  ],
+  design:true, mass:()=>500,
+  build:p=>{const mu=RAIL,h=p.h;const a=[{t:'start',h,mu},{t:'drop',to:0,L:h*1.5,mu},{t:'flat',L:8,mu}];
+    for(const id of (p.parts||[])){
+      if(id==='hill')a.push({t:'hill',H:0.6*h,L:1.2*h+10,mu});
+      if(id==='hill2')a.push({t:'hill',H:0.45*h,L:h+8,mu},{t:'hill',H:0.45*h,L:h+8,mu});
+      if(id==='loop')a.push({t:'loop',r:0.2*h,mu});
+      if(id==='bigloop')a.push({t:'loop',r:0.28*h,mu});
+      if(id==='loop2')a.push({t:'loop',r:0.2*h,mu},{t:'flat',L:4,mu},{t:'loop',r:0.16*h,mu});
+      a.push({t:'flat',L:8,mu});
+    }
+    a.push({t:'flat',L:12,mu},{t:'mark',name:'bz'},{t:'flat',L:30,mu:p.brake,brake:true});return a;},
+  quiz:[
+    {q:'本物のコースターの設計者が、計算だけでなく何度も試験走行して設計を直すのはなぜ？',o:['実際の摩擦や空気抵抗は計算どおりとは限らず、安全と面白さを確かめる必要があるから','計算はいつも正しいので、見た目を確認するためだけ'],a:0,e:'モデルと現実には必ずずれがあります。テストして直すことで、速さ・スリル・安全の余裕を調整します。'},
+    {q:'「ブレーキゾーン内で止まる」という条件は、遊園地では何のため？',o:['乗客を決まった場所で安全に乗り降りさせるため','電気代を節約するため'],a:0,e:'決まった場所でなめらかに止まることで、急ブレーキの衝撃を避け、安全に乗り降りできます。'}
+  ]
+}
+];
+
+// ===== i18n =====
+const UI={
+ja:{
+  title:'ジェットコースター・エネルギーラボ', tag:'高校物理基礎・力学的エネルギー',
+  routeLabel:'学習の区間', canvasLabel:'ジェットコースターのシミュレーション', speedLabel:'再生速度',
+  energyLabel:'エネルギーの棒グラフ', energyHead:'コースター＋地球の系のエネルギー',
+  lK:'運動', lU:'位置', lKU:'合計', lT:'熱など', chartLabel:'エネルギーの時間変化グラフ', xAxis:'横軸：時間',
+  quizLabel:'クイズ', credit:'制作：のざたん', themeLabel:'ライト／ダーク切り替え',
+  model:'モデルの簡略化：コースターは大きさのない物体として扱い、レールの摩擦は一定の大きさ、空気抵抗は速さの2乗に比例するとしています。ループでは頂上付近で速さが足りないとレールから離れて落ちます（ビー玉コースターと同じ条件）。g = 9.8 m/s²',
+  score:(c,t)=>`正解 ${c} / ${t}`,
+  go:'▶ 走らせる', again:'▶ もう一度', pause:'⏸ 一時停止', resume:'▶ 続ける', reset:'↺ スタートに戻す',
+  hudH:h=>`高さ ${h} m`, hudV:(v,k)=>`速さ ${v} m/s（${k} km/h）`, hudT:t=>`${t} 秒`, pointN:i=>`地点${i}`,
+  eq:(a,b)=>`K+U+T = <b>${a}</b>（スタート時 ${b}）`, eqCalc:'入力した値で棒をぬっています（基準：スタート時 176.4 kJ）',
+  quizHead:s=>`クイズ：${s}`, qResult:(o,n)=>`この区間の正解：${o} / ${n}`,
+  qReview:'まちがえた問題は、条件を変えて走らせながらもう一度確かめてみよう。',
+  qRetry:'もう一度解く', qNextStage:'次の区間へ', preset:'🎢 この条件をセットする',
+  presetDone:'条件をセットしました。予想してから「走らせる」を押そう。',
+  prev:'前へ', nextQ:'次の問題', seeResult:'結果を見る', correct:'正解！', wrong:'おしい！', expl:'解説',
+  brakeZone:'ブレーキゾーン', startH:h=>`スタートの高さ ${h} m`,
+  bCrash:'💥 落下！', bFall:'わあああ！', bBrake:'ブレーキ！', bFast:'キャー！', bFloat:'ふわっ…',
+  rCrash:'ループの頂上付近で速さが足りず、レールから離れて落下しました。',
+  rPipeOut:'スタートより高い反対側のふちを越えて、飛び出しました！（押して加えた K のおかげ）',
+  rOverrun:'止まりきれずにコースの端まで行ってしまいました。',
+  rHillOk:'丘を越えて、ブレーキゾーンで止まりました。',
+  rHillNg:'丘を越えられず、谷で行ったり来たりしたあと止まりました。',
+  rHillBack:h=>`丘を越えられずに引き返しました（到達した高さ ${h} m）。`,
+  rPipe:h=>`往復するたびに届く高さが下がり、底で止まりました。反対側で一番高く上がったのは ${h} m（スタート 20 m）。`,
+  rDone:'完走！ブレーキゾーンで止まりました。', rMid:'コースの途中で止まりました。',
+  cPoint:'地点', cLabels:{K:'運動エネルギー',U:'位置エネルギー',KU:'K+U',T:'熱などに変わった量'},
+  cCheck:'答え合わせ', cHint:'ヒント',
+  cHintText:pt=>`K = ½ × 400 × ${pt.v}²、U = 400 × 9.8 × ${pt.h}、T = 176,400 − (K+U)`,
+  cOk:'全部正解！棒グラフで K・U・T のバランスも確かめよう。', cNg:'赤い欄を見直そう。単位は J（ジュール）です。',
+  dName:'コースターの名前', dNamePh:'例：ドラゴン・スパイラル', dAdd:'パーツを追加（最大6つ）', dNone:'まだパーツがありません',
+  dUp:'前へ移動', dDel:'削除', dThrill:'スリルポイント：',
+  dC1:n=>`スリルパーツを3つ以上入れる（いま ${n}つ）`, dC2:w=>`敷地の幅 380 m 以内に収める（いま ${w} m）`,
+  dC3:'コースから一度も離れない', dC4:'ブレーキゾーンの中で止まる', dRun:'（走らせて確認）',
+  dCrash:'ループで落下。ループを小さくする・前に移す・スタートを高くする、などを試そう。',
+  dEnd:'止まりきれずに車止めへ。ブレーキを強くしよう。',
+  dShort:'ブレーキゾーンに届く前に止まりました。エネルギーが足りません。',
+  dDone:(n,t)=>`「${n}」完成！すべての条件をクリア。スリルポイント ${t} pt`,
+  dPartial:'走行は成功。残りの条件も満たそう。', dNoName:'名前のないコースター',
+  parts:{hill:'丘',hill2:'2連の丘',loop:'ループ',bigloop:'大ループ',loop2:'2連ループ'}
+},
+en:{
+  title:'Roller Coaster Energy Lab', tag:'High school physics · Mechanical energy',
+  routeLabel:'Course sections', canvasLabel:'Roller coaster simulation', speedLabel:'Playback speed',
+  energyLabel:'Energy bar chart', energyHead:'Energy of the coaster + Earth system',
+  lK:'Kinetic', lU:'Potential', lKU:'Sum', lT:'Heat etc.', chartLabel:'Energy over time', xAxis:'x-axis: time',
+  quizLabel:'Quiz', credit:'Made by Nozatan', themeLabel:'Switch light / dark',
+  model:'Model simplifications: the coaster is treated as a point object, rail friction has a constant magnitude, and air resistance is proportional to the square of the speed. In a loop, if the coaster is too slow near the top, it leaves the rail and falls (the same condition as a marble coaster). g = 9.8 m/s²',
+  score:(c,t)=>`Correct ${c} / ${t}`,
+  go:'▶ Run', again:'▶ Run again', pause:'⏸ Pause', resume:'▶ Resume', reset:'↺ Back to start',
+  hudH:h=>`Height ${h} m`, hudV:(v,k)=>`Speed ${v} m/s (${k} km/h)`, hudT:t=>`${t} s`, pointN:i=>`Point ${i}`,
+  eq:(a,b)=>`K+U+T = <b>${a}</b> (at start: ${b})`, eqCalc:'The bars show the values you entered (reference: 176.4 kJ at the start)',
+  quizHead:s=>`Quiz: ${s}`, qResult:(o,n)=>`Correct in this section: ${o} / ${n}`,
+  qReview:'For any you missed, change the conditions, run the coaster, and check again.',
+  qRetry:'Try again', qNextStage:'Next section', preset:'🎢 Set these conditions',
+  presetDone:'Conditions set. Make a prediction, then press "Run".',
+  prev:'Back', nextQ:'Next question', seeResult:'See results', correct:'Correct!', wrong:'Not quite!', expl:'Explanation',
+  brakeZone:'Brake zone', startH:h=>`Start height ${h} m`,
+  bCrash:'💥 Crash!', bFall:'Aaaah!', bBrake:'Braking!', bFast:'Wheee!', bFloat:'Floaty…',
+  rCrash:'Too slow near the top of the loop: it left the rail and fell.',
+  rPipeOut:'It flew out over the far rim, higher than the start! (Thanks to the K you added by pushing.)',
+  rOverrun:'It could not stop and ran to the end of the track.',
+  rHillOk:'It got over the hill and stopped in the brake zone.',
+  rHillNg:'It could not get over the hill, rocked back and forth in the valley, and stopped.',
+  rHillBack:h=>`It could not get over the hill and turned back (highest point reached: ${h} m).`,
+  rPipe:h=>`Each trip reached a little lower, and it stopped at the bottom. The highest it got on the far side was ${h} m (start: 20 m).`,
+  rDone:'Finished! It stopped in the brake zone.', rMid:'It stopped partway along the track.',
+  cPoint:'Point', cLabels:{K:'Kinetic energy',U:'Potential energy',KU:'K+U',T:'Energy turned into heat etc.'},
+  cCheck:'Check answers', cHint:'Hint',
+  cHintText:pt=>`K = ½ × 400 × ${pt.v}²; U = 400 × 9.8 × ${pt.h}; T = 176,400 − (K+U)`,
+  cOk:'All correct! Check the balance of K, U and T on the bar chart too.', cNg:'Check the red boxes again. The unit is J (joules).',
+  dName:'Coaster name', dNamePh:'e.g. Dragon Spiral', dAdd:'Add parts (up to 6)', dNone:'No parts yet',
+  dUp:'Move earlier', dDel:'Remove', dThrill:'Thrill points: ',
+  dC1:n=>`Include at least 3 thrill parts (now ${n})`, dC2:w=>`Fit within a site 380 m wide (now ${w} m)`,
+  dC3:'Never leave the track', dC4:'Stop inside the brake zone', dRun:' (run to check)',
+  dCrash:'It fell off the loop. Try a smaller loop, moving it earlier, or a higher start.',
+  dEnd:'It could not stop and hit the end of the track. Make the brakes stronger.',
+  dShort:'It stopped before reaching the brake zone. Not enough energy.',
+  dDone:(n,t)=>`"${n}" is complete! All conditions cleared. Thrill points: ${t} pt`,
+  dPartial:'The run worked. Now meet the remaining conditions too.', dNoName:'Unnamed Coaster',
+  parts:{hill:'Hill',hill2:'Double hill',loop:'Loop',bigloop:'Big loop',loop2:'Double loop'}
+}};
+// English text for each stage. Option arrays must keep the same order and length as the Japanese ones.
+const EN_STAGES={
+basic:{
+  short:'Energy basics', title:'Energy basics: height turns into speed',
+  lead:'A coaster sitting still at the top of the slope has only potential energy U. Run it and watch U change into kinetic energy K on the bar chart.',
+  controls:{h:{label:'Start height'},m:{label:'Mass (with riders)'},mu:{label:'Rail friction',options:['None','A little']}},
+  quiz:[
+    {q:'With the same mass, what decides how big the kinetic energy K is?',o:['Speed','Height','Direction','Time'],e:'K = ½mv². With the same mass, K is set by the speed v.'},
+    {q:'If the speed doubles, how many times larger does the kinetic energy become?',o:['2×','4×','No change','½×'],e:'K is proportional to v², so it becomes 2² = 4 times larger. A small difference in speed makes a big difference in energy.'},
+    {q:'U = mgh. If the mass and g stay the same, what decides the potential energy U?',o:['Speed','Height','Length of the rail'],e:'U is proportional to the height h above the reference level (here, the ground).'},
+    {q:'Run it with rail friction set to "None". At the bottom of the slope, how does the kinetic energy K compare with the potential energy U at the start?',hint:'Make a prediction, then look at the length of the K bar.',o:['About the same','About half','Zero','About double'],e:'Without friction, no energy escapes. The U at the start turns entirely into K at the bottom of the slope.'},
+    {q:'Set rail friction to "A little". What happens to K at the bottom of the slope?',o:['It gets a bit smaller','No change','It gets bigger'],e:'Friction with the rail and the air turns some of the energy into heat (T). K+U goes down, but K+U+T always equals the starting value.'},
+    {q:'If you double the mass, what happens to the speed at the bottom of the slope? (Change the mass and compare the speed readout.)',o:['Almost no change','It doubles','It halves'],e:'Both sides of mgh = ½mv² contain m, so the speed v = √(2gh) does not depend on the mass. The amount of energy grows in proportion to the mass.'}
+  ]},
+hill:{
+  short:'Over the hill?', title:'Over the hill?: you cannot go higher than the start',
+  lead:'Change the height of the second hill and test whether the coaster can get over it. The dashed line shows the start height. Always make a prediction before you run it.',
+  controls:{r:{label:'Hill height (relative to the start)'},mu:{label:'Rail friction',options:['None','A little']}},
+  quiz:[
+    {q:'Hill height 105% (a bit higher than the start). What will the coaster do?',hint:'Predict first, then run it.',o:['Go over the hill','Stop exactly at the top','Turn back at the start height','Turn back below the start height'],e:'To rise above the start, it would need more energy than it began with. And because friction turns some of it into heat, it cannot even reach the start height.'},
+    {q:'Hill height 100% (the same as the start). What happens?',o:['It goes over','It stops exactly at the top','It turns back before the top'],e:'Part of K+U turned into heat T along the way, so there is not enough U left to climb to the start height.'},
+    {q:'Hill height 95% (a little lower). What happens?',o:['It gets over','It does not get over'],e:'Even if the hill is a little lower, the coaster cannot get over it unless it can cover the energy lost as heat. "Lower than the start" does not always mean "makes it over".'},
+    {q:'Set rail friction to "None" and run it with the hill at 100%. What happens?',o:['It turns back well before the top','It climbs almost to the top, then turns back','It goes well over the top'],e:'Without friction K+U stays constant, so it can climb almost to the start height. But K becomes exactly 0 at the top, so it cannot get over.'},
+    {q:'With rail friction "A little", move the slider to find the highest hill it can clear. What percentage of the start height was it?',o:['Above 100%','Exactly 100%','Below 100%'],e:'On this course the limit is about 85–90%. That tells you what fraction of the starting U has turned into heat by that point.'},
+    {q:'K+U did not come back to 100%. Does that mean the law of conservation of energy was broken?',o:['No. The missing part became heat and moved to the surroundings','Yes. Some of the energy disappeared'],e:'K+U of the coaster + Earth system decreases, but the decrease moves to the surroundings as heat T. The total K+U+T does not change. That is energy conservation.'}
+  ]},
+friction:{
+  short:'Friction', title:'Friction: ice, snow, grass and the half-pipe',
+  lead:'Slide a sled down from the same height. Change the surface and compare how much energy turns into heat. In the second half, the sled goes back and forth in a half-pipe.',
+  controls:{course:{label:'Course',options:['Sled slope','Half-pipe']},mu:{label:'Surface',options:['Ice','Snow','Grass']},v0:{label:'Push speed at the start',note:'At 0 you just let go'}},
+  quiz:[
+    {q:'A snow slope and a grass slope of the same height. While sitting still at the top, which has more potential energy?',o:['Snow','Grass','The same'],e:'U = mgh depends only on the mass and the height, not on the surface.'},
+    {q:'On the way down, which turns more kinetic energy into heat?',o:['Snow','Grass','The same'],e:'Grass has more friction, so the T bar shoots up. Try snow too and compare.'},
+    {q:'At the bottom of the slope, which has more kinetic energy K?',o:['Snow','Grass','The same'],e:'The starting U is the same, but on grass more of it turns into heat, so K is smaller at the bottom.'},
+    {q:'Partway down the slope, can the bar chart ever show K+U larger than the starting value?',o:['No','Yes'],e:'Unless energy is added from outside, for example by pushing, K+U never goes above the starting value. With friction it only goes down.'},
+    {q:'When you let go in the half-pipe, the sled cannot reach the start height on the other side. What is the best explanation?',o:['Part of K turned into heat, so not all of it turned back into U','The mass was too small','U did not turn into K'],e:'Going down, U → K; going up, K → U. But along the way some of it becomes heat and leaves the system. Each trip back and forth reaches a little lower.'},
+    {q:'How can the sled get higher than the start in the half-pipe?',o:['Push at the start to add K','Increase the mass','Remove friction'],e:'Try a bigger push speed at the start. Pushing means the sled starts with some K already. Removing friction only gets it back to the start height, and changing the mass does not change how high it goes.'}
+  ]},
+loop:{
+  short:'Loop challenge', title:'Loop challenge: you need speed even at the top',
+  lead:'Change the size of the loop and find the biggest loop the coaster can go all the way around without falling. At the top of the loop, it is not enough just to keep moving: it needs at least a certain speed.',
+  controls:{r:{label:'Loop radius',note:'The loop is twice as tall as its radius'},pos:{label:'Loop position',options:['Right after the first drop','After two hills']}},
+  quiz:[
+    {q:'Predict: compared with the highest hill it can clear (about 35 m), how tall is the tallest loop it can get through without falling?',o:['Lower than the hill','About the same as the hill','Higher than the hill'],e:'On this course the limit is around a 14 m radius (28 m tall). At the top of the loop there must still be enough speed (K) not to fall, so less energy is available for U.'},
+    {q:'At the top of the loop, how is the system’s energy split?',hint:'Pause at the top and look at the bar chart.',o:['Both K and U (plus the heat T so far)','Only U','Only K'],e:'The top is high, so U is large, but K is not 0 either. If the coaster stopped, it would fall.'},
+    {q:'What happens if you run it with a 16 m radius?',o:['It leaves the rail near the top and falls','It gets through','It stops at the top'],e:'Near the top it is too slow: gravity alone is more than the centripetal force needed to follow the circle. On a real coaster this would be a serious accident, which is why designers build in a safety margin.'},
+    {q:'Set the loop position to "After two hills" and run it with a 14 m radius. What happens?',o:['It falls, even though it got through in the first position','The same result in either position'],e:'Energy keeps turning into heat while the coaster goes over the hills. The later the loop, the less K+U is left to use.'},
+    {q:'Why are loops on real coasters often placed in the first half of the ride?',o:['Less energy has turned into heat yet, so there is enough left for a big loop','Riders are tired in the second half','Potential energy increases in the second half'],e:'K+U is largest early on, so a big, thrilling loop fits there. The hills in the second half are lower, and the brakes stop the train at the end.'}
+  ]},
+calc:{
+  short:'Calculation challenge', title:'Calculation challenge: energy at four points',
+  lead:'A 400 kg coaster starts at rest 45.0 m above the lowest point. Using g = 9.8 m/s², calculate K, U, K+U and T at each point. Your answers appear on the bar chart as you type.',
+  controls:{},
+  points:['Start. At rest.','Bottom of the first drop (the lowest point). Speed 29 m/s.','Top of a 35.0 m hill. Speed 9.0 m/s.','Height 20.0 m, just before the brakes. Speed 6.0 m/s.'],
+  quiz:[
+    {q:'Of the four points, where is T (energy turned into heat etc.) the largest?',o:['Point 1','Point 2','Point 3','Point 4'],e:'T keeps building up the farther the coaster travels. K+U+T is 176,400 J at every point.'},
+    {q:'At point 2, K+U is 8,200 J less than at the start. Where did those 8,200 J go?',o:['They became heat through friction and air resistance and moved to the surroundings','They vanished','They became potential energy of the ground'],e:'The energy that left the system became heat that warms the rail, the air and so on.'}
+  ]},
+design:{
+  short:'Your own design', title:'Your own design: a safe, thrilling coaster',
+  lead:'Combine parts to design your own coaster. The goal is to meet every condition and score as many thrill points as possible. Run it each time you add a part, and fix it if it does not work.',
+  controls:{h:{label:'Start height'},brake:{label:'Brake strength'}},
+  quiz:[
+    {q:'Why do real coaster designers do many test runs and revise the design, instead of relying only on calculations?',o:['Real friction and air resistance do not always match the calculation, so safety and fun have to be checked','The calculation is always right; the tests only check how it looks'],e:'There is always a gap between a model and reality. Testing and revising lets designers tune the speed, the thrill and the safety margin.'},
+    {q:'At an amusement park, what is the condition "stop inside the brake zone" for?',o:['So riders can get on and off safely at a fixed spot','To save electricity'],e:'Stopping smoothly at a fixed spot avoids the jolt of sudden braking and lets riders get on and off safely.'}
+  ]}
+};
+let LANG='ja';
+try{LANG=localStorage.getItem('rc-energy-lab-lang')||(/^ja\b/i.test(navigator.language||'ja')?'ja':'en');}catch(e){}
+if(LANG!=='ja'&&LANG!=='en')LANG='ja';
+const msg=k=>UI[LANG][k];
+const locCache={};
+function loc(st){
+  if(LANG!=='en')return st;
+  if(locCache[st.id])return locCache[st.id];
+  const e=EN_STAGES[st.id];
+  return locCache[st.id]=Object.assign({},st,{short:e.short,title:e.title,lead:e.lead,
+    controls:st.controls.map(c=>{const ec=e.controls[c.id]||{};return Object.assign({},c,{label:ec.label||c.label,note:ec.note||c.note,
+      options:c.options&&c.options.map((o,i)=>Object.assign({},o,{l:(ec.options||[])[i]||o.l}))});}),
+    quiz:st.quiz.map((q,i)=>Object.assign({},q,e.quiz[i])),
+    points:st.points&&st.points.map((p,i)=>Object.assign({},p,{txt:e.points[i]||p.txt}))});
+}
+const cur=()=>loc(STAGES[stageIdx]);
+
+// ===== App =====
+const $=id=>document.getElementById(id);
+const reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const STORE='rc-energy-lab-v1';
+let saved={stage:0,answers:{},params:{},parts:[],name:''};
+try{const s=JSON.parse(localStorage.getItem(STORE)||'null');if(s)saved=Object.assign(saved,s);}catch(e){}
+function persist(){try{localStorage.setItem(STORE,JSON.stringify(saved));}catch(e){}}
+
+let stageIdx=Math.min(saved.stage||0,STAGES.length-1);
+let params={}, track=null, sim=null, running=false, speed=2, hist=[], histT=0;
+let calcPoint=0, calcVals={}, qIdx=0;
+
+// ---------- route ----------
+function renderRoute(){
+  const r=$('route');r.innerHTML='';
+  STAGES.forEach((st0,i)=>{
+    const st=loc(st0);
+    const b=document.createElement('button');b.className='stop';
+    const ans=saved.answers[st.id]||{};const n=Object.keys(ans).length;
+    if(n>=st.quiz.length)b.classList.add('done');
+    if(i===stageIdx)b.setAttribute('aria-current','step');
+    b.innerHTML=`<span class="dot">${i+1}</span><span class="nm">${st.short}</span>`;
+    b.onclick=()=>gotoStage(i);r.appendChild(b);
+  });
+  let c=0;for(const k in saved.answers)for(const q in saved.answers[k])if(saved.answers[k][q])c++;
+  let tot=0;STAGES.forEach(s=>tot+=s.quiz.length);
+  $('score').textContent=msg('score')(c,tot);
+}
+
+// ---------- controls ----------
+function fmt(v,unit){return unit==='m'||unit==='kg'||unit==='%'||unit==='m/s'?`${v} ${unit}`:(+v).toFixed(1);}
+function renderControls(){
+  const st=cur(),box=$('controls');box.innerHTML='';
+  const sp=saved.params[st.id]||{};
+  params={};
+  for(const c of st.controls){
+    params[c.id]=sp[c.id]!=null?sp[c.id]:c.value;
+    const d=document.createElement('div');d.className='ctl';
+    if(c.type==='range'){
+      d.innerHTML=`<label for="c_${c.id}"><span>${c.label}</span><output id="o_${c.id}">${fmt(params[c.id],c.unit)}</output></label>
+      <input type="range" id="c_${c.id}" min="${c.min}" max="${c.max}" step="${c.step}" value="${params[c.id]}">${c.note?`<div class="note">${c.note}</div>`:''}`;
+      d.querySelector('input').oninput=e=>{params[c.id]=+e.target.value;$('o_'+c.id).textContent=fmt(params[c.id],c.unit);onParams();};
+    }else{
+      d.innerHTML=`<label><span>${c.label}</span></label><div class="seg" role="group" aria-label="${c.label}" data-id="${c.id}"></div>`;
+      const sg=d.querySelector('.seg');
+      c.options.forEach(o=>{const b=document.createElement('button');b.textContent=o.l;b.dataset.v=o.v;
+        b.setAttribute('aria-pressed',String(o.v)===String(params[c.id]));
+        b.onclick=()=>{params[c.id]=o.v;sg.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));onParams();};
+        sg.appendChild(b);});
+    }
+    box.appendChild(d);
+  }
+  if(st.design)params.parts=saved.parts.slice();
+}
+function setParams(p){
+  const st=cur();
+  for(const k in p){params[k]=p[k];
+    const inp=$('c_'+k);if(inp){inp.value=p[k];const c=st.controls.find(c=>c.id===k);$('o_'+k).textContent=fmt(p[k],c.unit);}
+    const c=st.controls.find(c=>c.id===k);
+    if(c&&c.type==='seg'){document.querySelectorAll('#controls .seg').forEach(sg=>{if(sg.dataset.id===c.id)sg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v)===String(p[k])));});}
+  }
+  onParams();
+}
+function onParams(){
+  const st=cur();const cp=Object.assign({},params);delete cp.parts;
+  saved.params[st.id]=cp;persist();rebuild();
+}
+
+// ---------- track / sim ----------
+function rebuild(){
+  const st=cur();
+  DRAG=st.noDrag&&st.noDrag(params)?0:0.0003;
+  track=buildTrack(st.build(params));
+  resetSim();
+  if(st.design)renderDesign();
+}
+function resetSim(){
+  const st=cur();
+  sim=newState(track,st.mass(params),params.v0||0);
+  running=false;hist=[];histT=0;sim.maxY2=0;sim.passedTop=false;
+  $('btnGo').textContent=msg('go');
+  setResult('');
+  if(st.calc){placeCalc();}
+  camera=null;
+}
+function placeCalc(){
+  const st=cur();const pt=st.points[calcPoint];
+  const idx=track.marks[pt.mark];sim.s=track.pts[idx].s;sim.u=0;
+}
+function setResult(t,cls){const r=$('result');r.textContent=t;r.className='result'+(cls?' '+cls:'');}
+
+function judge(){
+  const st=cur(),s=sim;const p=sampleTrack(track,s.s);
+  if(st.design){renderDesign();return;}
+  if(s.status==='crash'){setResult(msg('rCrash'),'ng');return;}
+  if(s.status==='end'){ if(st.id==='friction'&&params.course==='pipe') setResult(msg('rPipeOut'),'ok');
+    else setResult(msg('rOverrun'),'ng');return;}
+  if(s.status!=='stopped')return;
+  if(st.id==='hill'){ const top=track.pts[track.marks.hilltop].s;
+    setResult(s.passedTop?msg('rHillOk'):msg('rHillNg'),s.passedTop?'ok':'ng');return;}
+  if(st.id==='friction'&&params.course==='pipe'){setResult(msg('rPipe')(s.maxY2.toFixed(1)),'');return;}
+  if(st.design){renderDesign();return;}
+  if(p.brake) setResult(msg('rDone'),'ok');
+  else setResult(msg('rMid'),'');
+}
+
+// ---------- canvas ----------
+const cv=$('cv'),ctx=cv.getContext('2d');let W=0,H=0,DPR=1,bgCache=null,camera=null;
+function resize(){
+  const r=cv.getBoundingClientRect();DPR=Math.min(2,window.devicePixelRatio||1);
+  W=r.width;H=r.height;cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);bgCache=null;camera=null;
+  const ch=$('chart');const cr=ch.getBoundingClientRect();ch.width=Math.round(cr.width*DPR);ch.height=Math.round(cr.height*DPR);
+}
+function getCam(){
+  if(camera)return camera;
+  const ground=H-30, pad=24;
+  const minX=track.minX-6,maxX=track.maxX+6,maxY=Math.max(track.maxY,20)*1.12+3;
+  const sc=Math.min((W-pad*2)/(maxX-minX),(ground-pad)/maxY);
+  const ox=(W-(maxX-minX)*sc)/2-minX*sc;
+  camera={sc,ox,ground};return camera;
+}
+function toS(x,y){const c=getCam();return [c.ox+x*c.sc,c.ground-y*c.sc];}
+function drawBg(){
+  if(bgCache)return bgCache;
+  const oc=document.createElement('canvas');oc.width=cv.width;oc.height=cv.height;const g=oc.getContext('2d');g.scale(DPR,DPR);
+  const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#4FA3EC');gr.addColorStop(.65,'#A9DBFF');gr.addColorStop(1,'#FFE3B8');
+  g.fillStyle=gr;g.fillRect(0,0,W,H);
+  // sun
+  g.fillStyle='rgba(255,236,150,.9)';g.beginPath();g.arc(W*.86,H*.2,Math.min(W,H)*.07,0,Math.PI*2);g.fill();
+  // ferris wheel silhouette
+  const fx=W*.8,fy=H-30-H*.32,fr=H*.28;g.strokeStyle='rgba(120,110,190,.35)';g.lineWidth=3;
+  g.beginPath();g.arc(fx,fy,fr,0,Math.PI*2);g.stroke();
+  for(let i=0;i<12;i++){const a=i*Math.PI/6;g.beginPath();g.moveTo(fx,fy);g.lineTo(fx+fr*Math.cos(a),fy+fr*Math.sin(a));g.stroke();
+    g.fillStyle='rgba(120,110,190,.35)';g.beginPath();g.arc(fx+fr*Math.cos(a),fy+fr*Math.sin(a),5,0,Math.PI*2);g.fill();}
+  g.beginPath();g.moveTo(fx,fy);g.lineTo(fx-fr*.45,H-30);g.moveTo(fx,fy);g.lineTo(fx+fr*.45,H-30);g.stroke();
+  // tents
+  for(const tx of [W*.12,W*.3,W*.55]){g.fillStyle='rgba(230,57,70,.25)';g.beginPath();g.moveTo(tx-26,H-30);g.lineTo(tx,H-30-38);g.lineTo(tx+26,H-30);g.fill();}
+  // trees
+  for(let x=10;x<W;x+=34){const r=10+((x*7)%9);g.fillStyle='rgba(46,140,90,.55)';g.beginPath();g.arc(x,H-30-r*.6,r,0,Math.PI*2);g.fill();}
+  // ground
+  g.fillStyle='#5DBB63';g.fillRect(0,H-30,W,30);g.fillStyle='#4AA552';g.fillRect(0,H-30,W,4);
+  bgCache=oc;return oc;
+}
+let cloudT=0;
+function drawClouds(){
+  ctx.fillStyle='rgba(255,255,255,.85)';
+  for(let i=0;i<3;i++){const x=((i*W*.37+cloudT*(8+i*4))%(W+160))-80,y=H*(.12+i*.09);
+    ctx.beginPath();ctx.ellipse(x,y,34,12,0,0,Math.PI*2);ctx.ellipse(x+22,y-8,22,13,0,0,Math.PI*2);ctx.ellipse(x-18,y-4,18,10,0,0,Math.PI*2);ctx.fill();}
+}
+function drawTrack(){
+  const P=track.pts,c=getCam();
+  // supports
+  ctx.lineWidth=2;ctx.strokeStyle='#E8ECF6';
+  let prev=null;
+  for(let i=0;i<P.length;i+=20){const p=P[i];
+    if(p.loop&&p.y>0.3){prev=null;continue;}
+    if(p.y<0.6){prev=null;continue;}
+    const [x,y]=toS(p.x,p.y);ctx.beginPath();ctx.moveTo(x,y+4);ctx.lineTo(x,c.ground);ctx.stroke();
+    if(prev&&Math.abs(prev[0]-x)<60){ctx.save();ctx.globalAlpha=.6;ctx.lineWidth=1;ctx.beginPath();
+      ctx.moveTo(prev[0],prev[1]+4);ctx.lineTo(x,c.ground);ctx.moveTo(x,y+4);ctx.lineTo(prev[0],c.ground);ctx.stroke();ctx.restore();}
+    prev=[x,y];}
+  // loop supports
+  // rail underside
+  const path=()=>{ctx.beginPath();P.forEach((p,i)=>{const [x,y]=toS(p.x,p.y);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});};
+  ctx.lineJoin='round';ctx.lineCap='round';
+  path();ctx.strokeStyle='#1D2B53';ctx.lineWidth=8;ctx.stroke();
+  path();ctx.strokeStyle='#E63946';ctx.lineWidth=3.5;ctx.stroke();
+  // ties
+  ctx.strokeStyle='#F4F8FF';ctx.lineWidth=1.5;
+  for(let i=0;i<P.length;i+=6){const p=P[i];const [x,y]=toS(p.x,p.y);const nx=-p.ty,ny=p.tx;
+    ctx.beginPath();ctx.moveTo(x-nx*3.5,y+ny*3.5);ctx.lineTo(x+nx*3.5,y-ny*3.5);ctx.stroke();}
+  // brake zone
+  ctx.lineWidth=5;ctx.setLineDash([6,6]);ctx.strokeStyle='#FFC93C';
+  ctx.beginPath();let on=false;P.forEach(p=>{const [x,y]=toS(p.x,p.y);if(p.brake){on?ctx.lineTo(x,y):ctx.moveTo(x,y);on=true;}else on=false;});ctx.stroke();ctx.setLineDash([]);
+  const bz=P.find(p=>p.brake);if(bz){const [x,y]=toS(bz.x,bz.y);label(msg('brakeZone'),x+4,y-14,'#1D2B53','#FFC93C');}
+}
+function label(t,x,y,fg,bg){ctx.font='700 12px "M PLUS Rounded 1c",sans-serif';const w=ctx.measureText(t).width+10;x=Math.max(4,Math.min(x,W-w-4));
+  ctx.fillStyle=bg;roundRect(x,y-11,w,17,5);ctx.fill();ctx.fillStyle=fg;ctx.fillText(t,x+5,y+2);}
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function drawGuides(){
+  const st=cur();const y0=track.pts[0].y;const [,sy]=toS(0,y0);
+  ctx.save();ctx.setLineDash([5,5]);ctx.strokeStyle='rgba(29,43,83,.7)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(8,sy);ctx.lineTo(W-8,sy);ctx.stroke();ctx.restore();
+  label(msg('startH')(y0.toFixed(0)),W-160,sy-8,'#fff','rgba(29,43,83,.8)');
+  if(st.calc){st.points.forEach((pt,i)=>{const p=track.pts[track.marks[pt.mark]];const [x,y]=toS(p.x,p.y);
+    ctx.fillStyle=i===calcPoint?'#FFC93C':'#fff';ctx.strokeStyle='#1D2B53';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y+18,11,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#1D2B53';ctx.font='800 13px "M PLUS Rounded 1c",sans-serif';ctx.textAlign='center';ctx.fillText(i+1,x,y+23);ctx.textAlign='left';});}
+  if(st.id==='friction'&&params.course==='pipe'&&sim.maxY2>0){const [,my]=toS(0,sim.maxY2);ctx.strokeStyle='rgba(230,57,70,.8)';ctx.setLineDash([2,4]);ctx.beginPath();ctx.moveTo(W*.55,my);ctx.lineTo(W-8,my);ctx.stroke();ctx.setLineDash([]);}
+}
+const RIDERS=[['#F2C9A0','#3B2A20'],['#E0B089','#111'],['#F5D3B3','#C0772E']];
+function drawCar(){
+  let x,y,ang,v;
+  if(sim.status==='fall'||sim.status==='crash'){const f=sim.fall;[x,y]=toS(f.x,f.y);ang=-Math.atan2(f.vy,f.vx)+(sim.t-f.t0||0)*3;v=Math.hypot(f.vx,f.vy);}
+  else{const p=sampleTrack(track,sim.s);[x,y]=toS(p.x,p.y);ang=-Math.atan2(p.ty,p.tx);v=Math.abs(sim.u);}
+  const L=34,h=12;
+  ctx.save();ctx.translate(x,y);ctx.rotate(ang);ctx.translate(0,-(4+h/2));
+  // speed streaks
+  if(v>15&&sim.status==='run'&&!reduceMotion){ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=2;const d=sim.u>0?-1:1;
+    for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(d*(L/2+4),-4+i*5);ctx.lineTo(d*(L/2+4+v*.9),-4+i*5);ctx.stroke();}}
+  // riders
+  RIDERS.forEach((r,i)=>{const rx=-L/2+7+i*10;
+    if(v>12){ctx.strokeStyle=r[0];ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(rx-2,-h/2-6);ctx.lineTo(rx-4,-h/2-14);ctx.moveTo(rx+2,-h/2-6);ctx.lineTo(rx+4,-h/2-14);ctx.stroke();}
+    ctx.fillStyle=r[0];ctx.beginPath();ctx.arc(rx,-h/2-5,4.2,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=r[1];ctx.beginPath();ctx.arc(rx,-h/2-6.5,4.2,Math.PI,0);ctx.fill();});
+  // body
+  ctx.fillStyle='#FFC93C';ctx.strokeStyle='#1D2B53';ctx.lineWidth=2;roundRect(-L/2,-h/2,L,h,5);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#E63946';ctx.beginPath();ctx.moveTo(L/2-2,-h/2);ctx.lineTo(L/2+6,h/2-2);ctx.lineTo(L/2-2,h/2);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#1D2B53';for(const wx of [-L/2+7,L/2-7]){ctx.beginPath();ctx.arc(wx,h/2+1,3,0,Math.PI*2);ctx.fill();}
+  ctx.restore();
+  // bubbles
+  let t=null;
+  if(sim.status==='crash')t=msg('bCrash');
+  else if(sim.status==='fall')t=msg('bFall');
+  else if(sim.status==='run'){const p=sampleTrack(track,sim.s);
+    if(p.brake&&v>2)t=msg('bBrake');else if(v>24)t=msg('bFast');
+    else if(v<3&&p.y>track.maxY*.45)t=msg('bFloat');}
+  if(t){ctx.font='800 14px "M PLUS Rounded 1c",sans-serif';const w=ctx.measureText(t).width+14;const bx=Math.min(Math.max(x-w/2,4),W-w-4),by=Math.max(y-54,6);
+    ctx.fillStyle='#fff';ctx.strokeStyle='#1D2B53';ctx.lineWidth=2;roundRect(bx,by,w,24,10);ctx.fill();ctx.stroke();ctx.fillStyle='#1D2B53';ctx.fillText(t,bx+7,by+17);}
+}
+function draw(){
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.drawImage(drawBg(),0,0,W,H);
+  drawClouds();drawGuides();drawTrack();drawCar();
+}
+
+// ---------- energy UI ----------
+function kj(v){return (v/1000).toFixed(1)+' kJ';}
+function updateEnergy(){
+  const st=cur();let K,U,T,E0;
+  if(st.calc){const v=calcVals[calcPoint]||{};E0=176400;K=+v.K||0;U=+v.U||0;T=+v.T||0;var KU=v.KU!==undefined&&v.KU!==''?+v.KU:0;
+    setBars(K,U,KU,T,E0);$('eqline').innerHTML=msg('eqCalc');const cp=st.points[calcPoint];$('hudH').textContent=msg('hudH')(cp.h.toFixed(1));$('hudV').textContent=msg('hudV')(cp.v.toFixed(1),(cp.v*3.6).toFixed(0));$('hudT').textContent=msg('pointN')(calcPoint+1);return;}
+  ({K,U,T}=energies(track,sim));E0=sim.E0;
+  setBars(K,U,K+U,T,E0);
+  $('eqline').innerHTML=msg('eq')(kj(K+U+T),kj(E0));
+  const p=sim.status==='fall'||sim.status==='crash'?{y:sim.fall.y}:sampleTrack(track,sim.s);
+  const v=sim.status==='fall'||sim.status==='crash'?Math.hypot(sim.fall.vx,sim.fall.vy):Math.abs(sim.u);
+  $('hudH').textContent=msg('hudH')(p.y.toFixed(1));$('hudV').textContent=msg('hudV')(v.toFixed(1),(v*3.6).toFixed(0));$('hudT').textContent=msg('hudT')(sim.t.toFixed(1));
+}
+function setBars(K,U,KU,T,E0){
+  const pc=x=>Math.max(0,Math.min(100,x/E0*100))+'%';
+  $('bK').style.height=pc(K);$('bU').style.height=pc(U);$('bKU').style.height=pc(KU);$('bT').style.height=pc(T);
+  $('vK').textContent=kj(K);$('vU').textContent=kj(U);$('vKU').textContent=kj(KU);$('vT').textContent=kj(T);
+}
+function drawChart(){
+  const c=$('chart'),g=c.getContext('2d');const w=c.width,h=c.height;g.clearRect(0,0,w,h);
+  if(hist.length<2)return;const tmax=Math.max(10,hist[hist.length-1].t);
+  const line=(key,col)=>{g.strokeStyle=col;g.lineWidth=2*DPR;g.beginPath();hist.forEach((d,i)=>{const x=d.t/tmax*w,y=h-4*DPR-d[key]*(h-8*DPR);i?g.lineTo(x,y):g.moveTo(x,y);});g.stroke();};
+  const cs=getComputedStyle(document.documentElement);
+  line('U',cs.getPropertyValue('--U'));line('K',cs.getPropertyValue('--K'));line('T',cs.getPropertyValue('--T'));
+}
+
+// ---------- loop ----------
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;if(!reduceMotion)cloudT+=dt;
+  const st=cur();
+  if(running&&!st.calc){
+    const n=Math.ceil(dt*speed*480);const h=dt*speed/n;
+    for(let i=0;i<n;i++){
+      const prevStatus=sim.status,prevU=sim.u;stepSim(track,sim,h);
+      if(st.id==='hill'&&!sim.passedTop&&!sim.toldBack&&prevU>0&&sim.u<=0&&sampleTrack(track,sim.s).y>5){sim.toldBack=true;setResult(msg('rHillBack')(sampleTrack(track,sim.s).y.toFixed(1)),'ng');}
+      if(sim.status==='fall'&&prevStatus!=='fall')sim.fall.t0=sim.t;
+      if(sim.status==='run'){const p=sampleTrack(track,sim.s);
+        if(track.marks.hilltop!=null&&sim.s>track.pts[track.marks.hilltop].s+1)sim.passedTop=true;
+        if(p.x>track.pts[Math.floor(track.pts.length/2)].x)sim.maxY2=Math.max(sim.maxY2,p.y);}
+      if(sim.status!=='run'&&sim.status!=='fall')break;
+    }
+    if(sim.t-histT>=0.1){histT=sim.t;const e=energies(track,sim);hist.push({t:sim.t,K:e.K/sim.E0,U:e.U/sim.E0,T:e.T/sim.E0});if(hist.length>3000)hist.shift();}
+    if(sim.status!=='run'&&sim.status!=='fall'){running=false;$('btnGo').textContent=msg('again');judge();}
+  }
+  draw();updateEnergy();drawChart();
+  requestAnimationFrame(frame);
+}
+$('btnGo').onclick=()=>{
+  if(cur().calc)return;
+  if(running){running=false;$('btnGo').textContent=msg('resume');return;}
+  if(sim.status!=='ready'&&sim.status!=='run'){resetSim();}
+  sim.status='run';running=true;$('btnGo').textContent=msg('pause');setResult('');
+};
+$('btnReset').onclick=()=>resetSim();
+document.querySelectorAll('#speedSeg button').forEach(b=>b.onclick=()=>{speed=+b.dataset.sp;document.querySelectorAll('#speedSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));});
+
+// ---------- quiz ----------
+function renderQuiz(){
+  const st=cur(),box=$('quiz');const ans=saved.answers[st.id]||(saved.answers[st.id]={});
+  $('qHead').textContent=msg('quizHead')(st.short);
+  if(qIdx>=st.quiz.length){
+    const ok=st.quiz.filter((q,i)=>ans[i]).length;
+    box.innerHTML=`<div class="qprog">${st.quiz.map((q,i)=>`<i class="${ans[i]===true?'ok':ans[i]===false?'ng':''}"></i>`).join('')}</div>
+    <p class="qtext">${msg('qResult')(ok,st.quiz.length)}</p>
+    <p class="qhint">${msg('qReview')}</p>
+    <div class="qnav"><button class="btn" id="qRetry">${msg('qRetry')}</button>${stageIdx<STAGES.length-1?`<button class="btn go" id="qNext">${msg('qNextStage')}</button>`:''}</div>`;
+    $('qRetry').onclick=()=>{saved.answers[st.id]={};persist();qIdx=0;renderQuiz();renderRoute();};
+    if($('qNext'))$('qNext').onclick=()=>gotoStage(stageIdx+1);
+    return;
+  }
+  const q=st.quiz[qIdx];const done=ans[qIdx]!==undefined;
+  box.innerHTML=`<div class="qprog">${st.quiz.map((x,i)=>`<i class="${i===qIdx?'now':ans[i]===true?'ok':ans[i]===false?'ng':''}"></i>`).join('')}</div>
+    <p class="qtext">Q${qIdx+1}. ${q.q}</p>${q.hint?`<p class="qhint">${q.hint}</p>`:''}
+    ${q.preset?`<button class="preset" id="qPreset">${msg('preset')}</button>`:''}
+    <div class="opts">${q.o.map((o,i)=>`<button class="opt" data-i="${i}">${o}</button>`).join('')}</div>
+    <div id="qfb"></div>
+    <div class="qnav"><button class="btn" id="qPrev" ${qIdx===0?'disabled':''}>${msg('prev')}</button><button class="btn go" id="qNextQ" ${done?'':'disabled'}>${qIdx===st.quiz.length-1?msg('seeResult'):msg('nextQ')}</button></div>`;
+  if(q.preset)$('qPreset').onclick=()=>{setParams(q.preset);setResult(msg('presetDone'));};
+  const showFb=(i)=>{box.querySelectorAll('.opt').forEach(b=>{b.disabled=true;const k=+b.dataset.i;if(k===q.a)b.classList.add('ok');else if(k===i)b.classList.add('ng');});
+    const ok=i===q.a;$('qfb').innerHTML=`<div class="fb ${ok?'ok':'ng'}"><b>${ok?msg('correct'):msg('wrong')}</b>${q.e}</div>`;$('qNextQ').disabled=false;};
+  box.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;ans[qIdx]=i===q.a;saved.answers[st.id]=ans;persist();showFb(i);renderRoute();});
+  if(done)box.querySelectorAll('.opt').forEach(b=>{b.disabled=true;if(+b.dataset.i===q.a)b.classList.add('ok');});
+  if(done)$('qfb').innerHTML=`<div class="fb"><b>${msg('expl')}</b>${q.e}</div>`;
+  $('qPrev').onclick=()=>{qIdx--;renderQuiz();};
+  $('qNextQ').onclick=()=>{qIdx++;renderQuiz();};
+}
+
+// ---------- calc stage ----------
+function renderCalc(){
+  const st=cur(),ex=$('extra');const pt=st.points[calcPoint];
+  const v=calcVals[calcPoint]||(calcVals[calcPoint]={});
+  ex.innerHTML=`<div class="controls" style="grid-template-columns:1fr"><div class="ctl"><label><span>${msg('cPoint')}</span></label>
+    <div class="seg" id="calcSeg">${st.points.map((p,i)=>`<button aria-pressed="${i===calcPoint}" data-i="${i}">${msg('pointN')(i+1)}</button>`).join('')}</div></div></div>
+    <div class="given"><b>${msg('pointN')(calcPoint+1)}</b>${LANG==='en'?': ':'：'}${pt.txt}</div>
+    <div class="calc">${['K','U','KU','T'].map(k=>[k,msg('cLabels')[k]]).map(([k,l])=>
+      `<label for="in_${k}">${k==='KU'?'K+U':k}</label><input id="in_${k}" inputmode="decimal" placeholder="${l}" value="${v[k]??''}"><span>J</span>`).join('')}</div>
+    <div class="play"><button class="btn go" id="calcCheck">${msg('cCheck')}</button><button class="btn" id="calcHint">${msg('cHint')}</button></div>
+    <div id="calcFb" class="result"></div>`;
+  ex.querySelectorAll('#calcSeg button').forEach(b=>b.onclick=()=>{calcPoint=+b.dataset.i;placeCalc();renderCalc();});
+  ['K','U','KU','T'].forEach(k=>$('in_'+k).oninput=e=>{v[k]=e.target.value.replace(/,/g,'');});
+  $('calcHint').onclick=()=>{$('calcFb').className='result';$('calcFb').textContent=msg('cHintText')(pt);};
+  $('calcCheck').onclick=()=>{let all=true;
+    ['K','U','KU','T'].forEach(k=>{const inp=$('in_'+k);const x=parseFloat(v[k]);const ok=!isNaN(x)&&Math.abs(x-pt[k])<=Math.max(50,pt[k]*0.01);inp.className=ok?'ok':'ng';if(!ok)all=false;});
+    $('calcFb').className='result '+(all?'ok':'ng');$('calcFb').textContent=all?msg('cOk'):msg('cNg');};
+}
+
+// ---------- design stage ----------
+function renderDesign(){
+  const st=cur(),ex=$('extra');const parts=params.parts||[];
+  const thrill=parts.reduce((a,id)=>a+PARTS[id].pt,0);
+  const width=track.maxX-track.minX;
+  const s=sim;const p=sampleTrack(track,s.s);
+  const tested=s.status!=='ready'&&s.status!=='run'&&s.status!=='fall';
+  const c1=parts.length>=3, c2=width<=380;
+  const c3=tested?s.status!=='crash':null;
+  const c4=tested?(s.status==='stopped'&&p.brake):null;
+  const cls=v=>v===null?'':v?'ok':'ng';
+  ex.innerHTML=`<div style="margin-top:14px"><label class="ctl" for="cname"><b>${msg('dName')}</b></label>
+    <input id="cname" class="namebox" maxlength="24" placeholder="${msg('dNamePh')}" value="${(saved.name||'').replace(/"/g,'&quot;')}"></div>
+    <div style="margin-top:12px"><b>${msg('dAdd')}</b>
+    <div class="palette">${Object.entries(PARTS).map(([id,pp])=>`<button class="chip" data-add="${id}">＋${msg('parts')[id]}<small>${pp.pt}pt</small></button>`).join('')}</div>
+    <ol class="parts">${parts.map((id,i)=>`<li>${i+1}. ${msg('parts')[id]}<button data-up="${i}" aria-label="${msg('dUp')}">◀</button><button data-del="${i}" aria-label="${msg('dDel')}">✕</button></li>`).join('')||`<li>${msg('dNone')}</li>`}</ol></div>
+    <p style="margin:12px 0 0;font-weight:800">${msg('dThrill')}<span style="color:var(--red);font-size:20px">${thrill}</span> pt</p>
+    <ul class="checks">
+      <li class="${cls(c1)}">${msg('dC1')(parts.length)}</li>
+      <li class="${cls(c2)}">${msg('dC2')(width.toFixed(0))}</li>
+      <li class="${cls(c3)}">${msg('dC3')}${tested?'':msg('dRun')}</li>
+      <li class="${cls(c4)}">${msg('dC4')}${tested?'':msg('dRun')}</li>
+    </ul>`;
+  $('cname').oninput=e=>{saved.name=e.target.value;persist();};
+  ex.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{if(parts.length>=6)return;parts.push(b.dataset.add);commitParts(parts);});
+  ex.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{parts.splice(+b.dataset.del,1);commitParts(parts);});
+  ex.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>{const i=+b.dataset.up;if(i>0){[parts[i-1],parts[i]]=[parts[i],parts[i-1]];commitParts(parts);}});
+  if(tested){
+    if(s.status==='crash')setResult(msg('dCrash'),'ng');
+    else if(s.status==='end')setResult(msg('dEnd'),'ng');
+    else if(!p.brake)setResult(msg('dShort'),'ng');
+    else if(c1&&c2)setResult(msg('dDone')(saved.name||msg('dNoName'),thrill),'ok');
+    else setResult(msg('dPartial'),'');
+  }
+}
+function commitParts(parts){params.parts=parts;saved.parts=parts.slice();persist();rebuild();}
+
+// ---------- stage switching ----------
+function gotoStage(i){
+  stageIdx=i;saved.stage=i;persist();qIdx=0;
+  const st=loc(STAGES[i]);const ans=saved.answers[st.id]||{};
+  while(qIdx<st.quiz.length&&ans[qIdx]!==undefined)qIdx++;
+  if(qIdx>=st.quiz.length&&Object.keys(ans).length<st.quiz.length)qIdx=0;
+  $('stTitle').textContent=st.title;$('stLead').textContent=st.lead;
+  $('extra').innerHTML='';
+  $('play').style.display=st.calc?'none':'';
+  renderControls();rebuild();
+  if(st.calc){calcPoint=0;placeCalc();renderCalc();}
+  renderRoute();renderQuiz();
+  resize();
+}
+// ---------- language / theme ----------
+function applyLang(){
+  document.documentElement.lang=LANG;document.title=msg('title');
+  document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=msg(el.dataset.i18n));
+  document.querySelectorAll('[data-i18n-aria]').forEach(el=>el.setAttribute('aria-label',msg(el.dataset.i18nAria)));
+  $('themeBtn').setAttribute('aria-label',msg('themeLabel'));
+  document.querySelectorAll('#langSw button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===LANG));
+}
+$('langSw').addEventListener('click',e=>{
+  const b=e.target.closest('[data-lang]');if(!b||b.dataset.lang===LANG)return;
+  LANG=b.dataset.lang;try{localStorage.setItem('rc-energy-lab-lang',LANG);}catch(e){}
+  applyLang();const q=qIdx,cp=calcPoint;gotoStage(stageIdx);
+  qIdx=q;renderQuiz();
+  if(cur().calc){calcPoint=cp;placeCalc();renderCalc();}
+});
+$('themeBtn').addEventListener('click',()=>{
+  const root=document.documentElement;
+  const dark=root.dataset.theme==='dark'||(!root.dataset.theme&&matchMedia('(prefers-color-scheme: dark)').matches);
+  root.dataset.theme=dark?'light':'dark';
+  try{localStorage.setItem('rc-energy-lab-theme',root.dataset.theme);}catch(e){}
+});
+
+window.addEventListener('resize',()=>{resize();});
+if('ResizeObserver' in window)new ResizeObserver(()=>resize()).observe($('scene'));
+applyLang();
+gotoStage(stageIdx);
+requestAnimationFrame(frame);
+
+</script>
+</body>
+</html>
