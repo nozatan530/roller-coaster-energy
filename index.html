@@ -19,6 +19,8 @@
 <meta property="og:image" content="https://coaster.meetupsensei.com/ogp.jpg">
 <meta property="og:url" content="https://coaster.meetupsensei.com/">
 <meta property="og:type" content="website">
+<link rel="canonical" href="https://coaster.meetupsensei.com/">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":["WebApplication","LearningResource"],"name":"ジェットコースター・エネルギーラボ","url":"https://coaster.meetupsensei.com/","description":"ジェットコースターを走らせて、運動エネルギー・位置エネルギー・熱の入れかわりを確かめる高校物理基礎のシミュレーション","applicationCategory":"EducationalApplication","operatingSystem":"Web ブラウザ","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"},"inLanguage":["ja","en"],"educationalLevel":"高校 物理基礎（中学３年 理科の発展）","learningResourceType":"シミュレーション","teaches":"力学的エネルギー保存","author":{"@type":"Person","name":"のざたん","url":"https://meetupsensei.com/about/"}}</script>
 <meta name="twitter:card" content="summary_large_image">
 <script>try{var t=localStorage.getItem('rc-energy-lab-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -160,6 +162,10 @@ footer{max-width:1280px;margin:0 auto;padding:0 20px 30px;font-size:12px;color:v
 footer .model{margin:0 0 18px}
 footer .credit{text-align:center;border-top:2px solid var(--line);padding-top:18px;margin:0}
 footer a{color:inherit}
+footer .about{margin:0 0 22px;font-size:13px;line-height:1.8}
+footer .about h2{font-size:15px;margin:0 0 6px}
+footer .about h3{font-size:13px;margin:12px 0 4px}
+footer .about ul{margin:0;padding-left:1.3em}
 @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
 </style>
 <link rel="icon" href="./favicon.ico" sizes="48x48">
@@ -223,6 +229,18 @@ footer a{color:inherit}
   </aside>
 </main>
 <footer>
+  <section class="about" lang="ja">
+    <h2>このシミュレーションについて</h2>
+    <p>ジェットコースターを走らせながら、運動エネルギー（K）・位置エネルギー（U）・摩擦や空気抵抗で生まれる熱など（T）の入れかわりを、棒グラフと時間のグラフで確かめる教材です。対象は高校の物理基礎「力学的エネルギー保存」。中学３年の理科（運動とエネルギー）の発展にも使えます。</p>
+    <h3>授業での使い方</h3>
+    <ul>
+      <li>区間１で、K と U の棒が入れかわるところで止めて、「合計はどうなっている？」と問いかける</li>
+      <li>「丘を越えられる？」「ループに挑戦」のクイズで、班ごとに予想を出してから一斉に走らせる</li>
+      <li>「オリジナル設計」で、うまくいかない原因をエネルギーの言葉で説明してもらう</li>
+    </ul>
+    <p>この URL を Google Classroom や Teams に貼るだけで、生徒の端末のブラウザで動きます。インストールも登録もいりません。</p>
+    <p>解説記事：<a href="https://meetupsensei.com/261102-blog-4/">力学的エネルギー保存は、ジェットコースターで見るとわかる</a> ／ ほかの教材：<a href="https://meetupsensei.com/webapps/">つくったもの</a></p>
+  </section>
   <p class="model" data-i18n="model">モデルの簡略化：コースターは大きさのない物体として扱い、レールの摩擦は一定の大きさ、空気抵抗は速さの2乗に比例するとしています。ループでは頂上付近で速さが足りないとレールから離れて落ちます（ビー玉コースターと同じ条件）。g = 9.8 m/s²</p>
   <p class="credit"><span data-i18n="credit">制作：のざたん</span> ／ <a href="https://meetupsensei.com">meetupsensei.com</a> ／ <a href="https://github.com/nozatan530/roller-coaster-energy/blob/main/LICENSE">MIT License</a> ／ <a href="https://github.com/nozatan530/roller-coaster-energy">GitHub</a></p>
 </footer>
